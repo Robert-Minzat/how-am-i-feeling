@@ -5,3 +5,4 @@ backend/__pycache__/
 backend/venv
 README.rst
 .vscode/
+.idea/

@@ -24,8 +24,8 @@ pcs = set()
 
 emotions = ['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise', 'neutral']
 
-detection_model_path = '../haarcascade_files/haarcascade_frontalface_default.xml'
-emotion_model_path = '../models/_best_tf-bs8.56-0.83.hdf5'
+detection_model_path = 'backend/haarcascade_files/haarcascade_frontalface_default.xml'
+emotion_model_path = 'backend/models/_best_tf-bs8.56-0.83.hdf5'
 
 face_detection = cv2.CascadeClassifier(detection_model_path)
 emotion_classifier = load_model(emotion_model_path, compile=False)
@@ -90,11 +90,21 @@ async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
 
-
 async def javascript(request):
     content = open(os.path.join(ROOT, "client.js"), "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
+async def bootstrapcss(request):
+    content = open(os.path.join(ROOT, "lib/css/bootstrap.min.css"), "r").read()
+    return web.Response(content_type="text/css", text=content)
+
+async def bootstrapjs(request):
+    content = open(os.path.join(ROOT, "lib/js/bootstrap.min.js"), "r").read()
+    return web.Response(content_type="application/javascript", text=content)
+
+async def jquery(request):
+    content = open(os.path.join(ROOT, "lib/js/jquery-3.5.1.min.js"), "r").read()
+    return web.Response(content_type="application/javascript", text=content)
 
 async def offer(request):
     params = await request.json()
@@ -187,6 +197,9 @@ if __name__ == "__main__":
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
+    app.router.add_get("/bootstrap.css", bootstrapcss)
+    app.router.add_get("/bootstrap.js", bootstrapjs)
+    app.router.add_get("/jquery-3.5.1.min.js", jquery)
     app.router.add_get("/client.js", javascript)
     app.router.add_post("/offer", offer)
     web.run_app(
