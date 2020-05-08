@@ -6,7 +6,7 @@ import numpy as np
 
 # parameters for loading data and images
 detection_model_path = 'haarcascade_files/haarcascade_frontalface_default.xml'
-emotion_model_path = 'models/_cnn_tf_best.hdf5'
+emotion_model_path = 'models/_best_tf-bs8.56-0.83.hdf5'
 
 # hyper-parameters for bounding boxes shape
 # loading models
@@ -37,7 +37,7 @@ while True:
         faces = sorted(faces, reverse=True,
                        key=lambda x: (x[2] - x[0]) * (x[3] - x[1]))[0]
         (fX, fY, fW, fH) = faces
-        # Extract the ROI of the face from the grayscale image, resize it to a fixed 28x28 pixels, and then prepare
+        # Extract the ROI of the face from the grayscale image, resize it to a 48x48 pixels, and then prepare
         # the ROI for classification via the CNN
         roi = gray[fY:fY + fH, fX:fX + fW]
         roi = cv2.resize(roi, (48, 48))

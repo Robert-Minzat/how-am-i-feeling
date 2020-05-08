@@ -10,6 +10,29 @@ var pc = null;
 // data channel
 var dc = null, dcInterval = null;
 
+var btnSend = document.getElementById('btn-send');
+btnSend.addEventListener('click', () => {
+    console.log("test");
+    //TODO verif daca s-a incarcat file
+    var blobFile = document.getElementById('filechooser').files[0];
+    console.log(document.getElementById('filechooser'))
+    var formData = new FormData();
+    formData.append("detect-image", blobFile)
+    console.log(formData);
+
+    fetch('/detect-image', {
+        body: formData,
+        method: 'POST'
+    })
+    // .then(response => { console.log(response, response.body, response.json()); return response; })
+    .then( response => response.blob())
+    // .then(blob => {console.log(blob); return blob;})
+    .then( blob => {
+        var imgUrl = URL.createObjectURL(blob);
+        document.getElementById('test-img').src = imgUrl;
+    })
+})
+
 function createPeerConnection() {
     var config = {
         sdpSemantics: 'unified-plan'
@@ -118,11 +141,11 @@ function start() {
 
     // create datachannel
     if (document.getElementById('use-datachannel').checked) {
-        // var parameters = JSON.parse(document.getElementById('datachannel-parameters').value);
-        var parameters = {
-            "ordered": "true",
-            "maxRetransmits": "0"
-        }
+        var parameters = JSON.parse(document.getElementById('datachannel-parameters').value);
+        // var parameters = {
+        //     "ordered": "true",
+        //     "maxRetransmits": "0"
+        // }
         dc = pc.createDataChannel('chat', parameters);
 
         // just dor debugging

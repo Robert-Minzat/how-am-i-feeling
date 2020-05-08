@@ -9,6 +9,7 @@ import numpy as np
 
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
+from PIL import Image
 
 import cv2
 from aiohttp import web
@@ -31,6 +32,59 @@ face_detection = cv2.CascadeClassifier(detection_model_path)
 emotion_classifier = load_model(emotion_model_path, compile=False)
 
 
+def detect_faces(frame):
+    # BGR -> Gray conversion
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Cascade MultiScale classifier
+    detected_faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6,
+                                                     minSize=(30, 30),
+                                                     flags=cv2.CASCADE_SCALE_IMAGE)
+
+    for (i, (x, y, w, h)) in enumerate(detected_faces):
+        face = gray[y:y + h, x:x + w]
+        face = cv2.resize(face, (48, 48))
+        face = face.astype("float") / 255.0
+        face = img_to_array(face)
+        face = np.expand_dims(face, axis=0)
+
+        predictions = emotion_classifier.predict(face)[0]
+        emotion_probability = np.max(predictions)
+        label = emotions[predictions.argmax()]
+
+        # Add rectangle
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(frame, "Face #{}".format(i + 1), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        # Add prediction probabilities
+        cv2.putText(frame, "----------------", (40, 100 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
+        cv2.putText(frame, "Emotional report : Face #" + str(i + 1), (40, 120 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                    155, 0)
+        cv2.putText(frame, emotions[0] + str(round(predictions[0], 3)), (40, 140 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, 155, 0)
+        cv2.putText(frame, emotions[1] + str(round(predictions[1], 3)), (40, 160 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
+        cv2.putText(frame, emotions[2] + str(round(predictions[2], 3)), (40, 180 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, 155, 1)
+        cv2.putText(frame, emotions[3] + str(round(predictions[3], 3)), (40, 200 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, 155, 1)
+        cv2.putText(frame, emotions[4] + str(round(predictions[4], 3)), (40, 220 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, 155, 1)
+        cv2.putText(frame, emotions[5] + str(round(predictions[5], 3)), (40, 240 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 1)
+        cv2.putText(frame, emotions[6] + str(round(predictions[6], 3)), (40, 260 + 180 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 1)
+
+        # Annotate main image with label
+        cv2.putText(frame, label, (x + w - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+
+    return frame
+
+
 class VideoTransformTrack(MediaStreamTrack):
     """
     A video stream track that transforms frames from an another track.
@@ -46,39 +100,40 @@ class VideoTransformTrack(MediaStreamTrack):
         frame = await self.track.recv()
 
         img = frame.to_ndarray(format="bgr24")
+        img = detect_faces(img)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30),
-                                                     flags=cv2.CASCADE_SCALE_IMAGE)
-        if len(faces) > 0:
-            faces = sorted(faces, reverse=True, key=lambda x: (x[2] - x[0]) * (x[3] - x[1]))[0]
-            (fX, fY, fW, fH) = faces
-            roi = gray[fY:fY + fH, fX:fX + fW]
-            roi = cv2.resize(roi, (48, 48))
-            roi = roi.astype('float') / 255.0
-            roi = img_to_array(roi)
-            roi = np.expand_dims(roi, axis=0)
-
-            preds = emotion_classifier.predict(roi)[0]
-            emotion_probability = np.max(preds)
-            label = emotions[preds.argmax()]
-            # for (i, (emotion, prob)) in enumerate(zip(self.emotions, preds)):
-            #     # construct the label text
-            #     # text = "{}: {:.2f}%".format(emotion, prob * 100)
-            #
-            #     # draw the label + probability bar on the canvas
-            #     # emoji_face = feelings_faces[np.argmax(preds)]
-            #
-            #     # w = int(prob * 300)
-            #     # cv2.rectangle(canvas, (7, (i * 35) + 5),
-            #     #             (w, (i * 35) + 35), (0, 0, 255), -1)
-            #     # cv2.putText(canvas, text, (10, (i * 35) + 23),
-            #     #             cv2.FONT_HERSHEY_SIMPLEX, 0.45,
-            #     #             (255, 255, 255), 2)
-            cv2.putText(img, label, (fX, fY - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
-            cv2.rectangle(img, (fX, fY), (fX + fW, fY + fH),
-                          (0, 0, 255), 2)
+        # faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30),
+        #                                              flags=cv2.CASCADE_SCALE_IMAGE)
+        # if len(faces) > 0:
+        #     faces = sorted(faces, reverse=True, key=lambda x: (x[2] - x[0]) * (x[3] - x[1]))[0]
+        #     (fX, fY, fW, fH) = faces
+        #     roi = gray[fY:fY + fH, fX:fX + fW]
+        #     roi = cv2.resize(roi, (48, 48))
+        #     roi = roi.astype('float') / 255.0
+        #     roi = img_to_array(roi)
+        #     roi = np.expand_dims(roi, axis=0)
+        #
+        #     preds = emotion_classifier.predict(roi)[0]
+        #     emotion_probability = np.max(preds)
+        #     label = emotions[preds.argmax()]
+        #     # for (i, (emotion, prob)) in enumerate(zip(self.emotions, preds)):
+        #     #     # construct the label text
+        #     #     # text = "{}: {:.2f}%".format(emotion, prob * 100)
+        #     #
+        #     #     # draw the label + probability bar on the canvas
+        #     #     # emoji_face = feelings_faces[np.argmax(preds)]
+        #     #
+        #     #     # w = int(prob * 300)
+        #     #     # cv2.rectangle(canvas, (7, (i * 35) + 5),
+        #     #     #             (w, (i * 35) + 35), (0, 0, 255), -1)
+        #     #     # cv2.putText(canvas, text, (10, (i * 35) + 23),
+        #     #     #             cv2.FONT_HERSHEY_SIMPLEX, 0.45,
+        #     #     #             (255, 255, 255), 2)
+        #     cv2.putText(img, label, (fX, fY - 10),
+        #                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+        #     cv2.rectangle(img, (fX, fY), (fX + fW, fY + fH),
+        #                   (0, 0, 255), 2)
 
         # rebuild a VideoFrame, preserving timing information
         new_frame = VideoFrame.from_ndarray(img, format="bgr24")
@@ -159,7 +214,18 @@ async def offer(request):
         ),
     )
 
+async def detect_image(request):
+    data = await request.post()
+    data_image = data['detect-image'].file
 
+    image = Image.open(data_image)
+    image = np.asarray(image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    image = detect_faces(image)
+
+    (flag, encodedImage) = cv2.imencode('.jpg', image)
+    return web.Response(body=bytearray(encodedImage), content_type="image/jpg")
 async def on_shutdown(app):
     # close peer connections
     coros = [pc.close() for pc in pcs]
@@ -202,6 +268,7 @@ if __name__ == "__main__":
     app.router.add_get("/jquery-3.5.1.min.js", jquery)
     app.router.add_get("/client.js", javascript)
     app.router.add_post("/offer", offer)
+    app.router.add_post("/detect-image", detect_image)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

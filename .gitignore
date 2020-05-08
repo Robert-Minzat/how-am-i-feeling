@@ -1,8 +1,8 @@
 dataset
 backend/models
-backend/.idea
 backend/__pycache__/
-backend/venv
 README.rst
 .vscode/
 .idea/
+venv
+backend/real_time_video2.py

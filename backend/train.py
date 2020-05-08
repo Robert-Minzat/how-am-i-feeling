@@ -6,7 +6,7 @@ from load_and_process import load_dataset_image, load_dataset_csv
 from sklearn.model_selection import train_test_split
 from cnn import gen_model, gen_model2
 
-batch_size = 8
+batch_size = 16
 num_epochs = 1000
 validation_split = 0.2
 verbose = 1
@@ -29,7 +29,7 @@ data_generator = ImageDataGenerator(
 model = gen_model()
 
 # load weights from checkpoint
-# model.load_weights(base_path + "fer.131-0.61.hdf5")
+model.load_weights(base_path + "fer.131-0.61.hdf5")
 
 model.compile(optimizer='adam', loss='categorical_crossentropy',
               metrics=['accuracy'])
@@ -40,7 +40,7 @@ log_file_path = base_path + '_emotion_training.log'
 csv_logger = CSVLogger(log_file_path, append=False)
 early_stop = EarlyStopping('val_loss', patience=patience)
 reduce_lr = ReduceLROnPlateau('val_loss', factor=0.1, patience=int(patience / 4), verbose=verbose)
-trained_models_path = base_path + 'ck_bs8'
+trained_models_path = base_path + 'tfck-bs16'
 model_names = trained_models_path + '.{epoch:02d}-{val_accuracy:.2f}.hdf5'
 model_checkpoint = ModelCheckpoint(model_names, 'val_loss', verbose=verbose, save_best_only=True)
 callbacks = [model_checkpoint, csv_logger, early_stop, reduce_lr]
