@@ -54,33 +54,34 @@ def detect_faces(frame):
 
         # Add rectangle
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame, "Face #{}".format(i + 1), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # cv2.putText(frame, "Face #{}".format(i + 1), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, label, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Add prediction probabilities
-        cv2.putText(frame, "----------------", (40, 100 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
-        cv2.putText(frame, "Emotional report : Face #" + str(i + 1), (40, 120 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                    155, 0)
-        cv2.putText(frame, emotions[0] + str(round(predictions[0], 3)), (40, 140 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, 155, 0)
-        cv2.putText(frame, emotions[1] + str(round(predictions[1], 3)), (40, 160 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
-        cv2.putText(frame, emotions[2] + str(round(predictions[2], 3)), (40, 180 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, 155, 1)
-        cv2.putText(frame, emotions[3] + str(round(predictions[3], 3)), (40, 200 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, 155, 1)
-        cv2.putText(frame, emotions[4] + str(round(predictions[4], 3)), (40, 220 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, 155, 1)
-        cv2.putText(frame, emotions[5] + str(round(predictions[5], 3)), (40, 240 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 1)
-        cv2.putText(frame, emotions[6] + str(round(predictions[6], 3)), (40, 260 + 180 * i),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 1)
+        # # Add prediction probabilities
+        # cv2.putText(frame, "----------------", (40, 100 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
+        # cv2.putText(frame, "Emotional report : Face #" + str(i + 1), (40, 120 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+        #             155, 0)
+        # cv2.putText(frame, emotions[0] + str(round(predictions[0], 3)), (40, 140 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX,
+        #             0.5, 155, 0)
+        # cv2.putText(frame, emotions[1] + str(round(predictions[1], 3)), (40, 160 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
+        # cv2.putText(frame, emotions[2] + str(round(predictions[2], 3)), (40, 180 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX,
+        #             0.5, 155, 1)
+        # cv2.putText(frame, emotions[3] + str(round(predictions[3], 3)), (40, 200 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX,
+        #             0.5, 155, 1)
+        # cv2.putText(frame, emotions[4] + str(round(predictions[4], 3)), (40, 220 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX,
+        #             0.5, 155, 1)
+        # cv2.putText(frame, emotions[5] + str(round(predictions[5], 3)), (40, 240 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 1)
+        # cv2.putText(frame, emotions[6] + str(round(predictions[6], 3)), (40, 260 + 180 * i),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 1)
 
         # Annotate main image with label
-        cv2.putText(frame, label, (x + w - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+        # cv2.putText(frame, label, (x + w - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
 
     return frame
 
@@ -141,6 +142,7 @@ class VideoTransformTrack(MediaStreamTrack):
         new_frame.time_base = frame.time_base
         return new_frame
 
+
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
@@ -149,12 +151,16 @@ async def javascript(request):
     content = open(os.path.join(ROOT, "client.js"), "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
+async def style(request):
+    content = open(os.path.join(ROOT, "TEMP/lib/css/style.css"), "r").read()
+    return web.Response(content_type="text/css", text=content)
+
 async def bootstrapcss(request):
-    content = open(os.path.join(ROOT, "lib/css/bootstrap.min.css"), "r").read()
+    content = open(os.path.join(ROOT, "TEMP/lib/css/bootstrap.min.css"), "r").read()
     return web.Response(content_type="text/css", text=content)
 
 async def bootstrapjs(request):
-    content = open(os.path.join(ROOT, "lib/js/bootstrap.min.js"), "r").read()
+    content = open(os.path.join(ROOT, "lib/js/bootstrap.bundle.min.js"), "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
 async def jquery(request):
@@ -176,6 +182,10 @@ async def offer(request):
 
     @pc.on("datachannel")
     def on_datachannel(channel):
+        @channel.on("open")
+        def on_open():
+            print("s-a deschis dc")
+
         @channel.on("message")
         def on_message(message):
             if isinstance(message, str) and message.startswith("ping"):
@@ -226,6 +236,7 @@ async def detect_image(request):
 
     (flag, encodedImage) = cv2.imencode('.jpg', image)
     return web.Response(body=bytearray(encodedImage), content_type="image/jpg")
+
 async def on_shutdown(app):
     # close peer connections
     coros = [pc.close() for pc in pcs]
@@ -262,11 +273,18 @@ if __name__ == "__main__":
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/", index)
+
+    # pages
+    # app.router.add_get("/", index)
+
+    # resources
+    app.router.add_get('/style.css', style)
     app.router.add_get("/bootstrap.css", bootstrapcss)
-    app.router.add_get("/bootstrap.js", bootstrapjs)
-    app.router.add_get("/jquery-3.5.1.min.js", jquery)
-    app.router.add_get("/client.js", javascript)
+    # app.router.add_get("/bootstrap.js", bootstrapjs)
+    # app.router.add_get("/jquery-3.5.1.min.js", jquery)
+    # app.router.add_get("/client.js", javascript)
+
+    # functional routes
     app.router.add_post("/offer", offer)
     app.router.add_post("/detect-image", detect_image)
     web.run_app(
