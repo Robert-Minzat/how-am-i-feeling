@@ -38,6 +38,7 @@ i, span {
     min-width: 250px;
     max-width: 250px;
     transition: all 0.3s;
+    margin-bottom: 0;
     display: inline;
 }
 

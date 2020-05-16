@@ -57,7 +57,6 @@ export default class LiveWebcam extends Component {
     return (
       <Container fluid>
         <ul>
-          <li>normal webcam/detect button</li>
           <li>add screenshot(easy)</li>
         </ul>
 
@@ -78,10 +77,10 @@ export default class LiveWebcam extends Component {
                     <h2>Media</h2>
                   </Col>
                   <Col md={6} className="text-right">
-                    <Button className="disabled" as="span" variant={!this.state.detecting ? "outline-danger" : "outline-success"}>
+                    <Button as="span" variant={!this.state.detecting && (this.state.iceCon !=='new' || this.state.iceCon !=='connected') ? "outline-danger" : "outline-success"}>
                       Connection state: {this.props.iceCon}
                       <Spinner as="span" role="status" size="sm"
-                        variant={this.props.iceCon === 'connected' ? 'danger' : 'info'}
+                        variant={this.props.iceCon === 'connected' ? 'danger' : 'success'}
                         animation={this.props.iceCon === 'connected' ? "grow" : "border"}
                         style={{ display: this.props.iceCon && this.props.iceCon !== 'closed' ? "inline-block" : "none" }}>
                       </Spinner>
@@ -100,17 +99,11 @@ export default class LiveWebcam extends Component {
               </Col>
               <Col md={4}> add statistics or screenshots here</Col>
             </Row>
-            {/* <Row className="mt-2"> */}
-              {/* <Col md={8} className="text-center" style={{position: "relative"}}>
-                <Spinner role="status" animation="border"
-                  className={this.state.loading ? "" : "d-none"} style={{position: "absolute", top: "50%", left: "50%", zIndex: "100"}}>
-                </Spinner>
-              </Col> */}
               {this.props.loading ?
               <Row className="mt-2">
                 <Col md={4}></Col>
                 <Col md={2} className="text-center" style={{ position: "relative" }}>
-                  <Spinner role="status" animation="border"
+                  <Spinner role="status" animation="border" variant="success"
                      style={{ position: "absolute", top: "50%", left: "50%" }}>
                   </Spinner>
                 </Col>

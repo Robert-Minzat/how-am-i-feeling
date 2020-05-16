@@ -1,12 +1,11 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
-import Button from 'react-bootstrap/Button';
-// import ButtonToolbar from 'react-bootstrap/ButtonToolbar';
-import Container from 'react-bootstrap/Container'
 import Sidebar from './components/Sidebar'
 import Navbar from './components/Navbar'
 import LiveWebcam from './ui/LiveWebcam'
+import ImageUpload from './ui/ImageUpload'
+import Toaster from './components/Toaster'
 class App extends Component {
   state = {
     constraints: {
@@ -26,6 +25,10 @@ class App extends Component {
     signaling: null,
     videoStream: null,
     loading: false,
+    title: 'Live webcam',
+    showToaster: false,
+    toasterMessage: '',
+    toasterVariant: ''
   }
 
   createPeerConnection = () => {
@@ -63,8 +66,6 @@ class App extends Component {
     this.setState({ pc });
   }
 
-
-
   negotiate = async () => {
     const { pc } = this.state
     try {
@@ -76,12 +77,12 @@ class App extends Component {
         if (pc.iceGatheringState === 'complete') {
           resolve();
         } else {
-            pc.onicegatheringstatechange = () => {
-              if (pc.iceGatheringState === 'complete') {
-                pc.onicegatheringstatechange = null;
-                resolve();
-              }
-            };
+          pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === 'complete') {
+              pc.onicegatheringstatechange = null;
+              resolve();
+            }
+          };
         }
       })
 
@@ -204,28 +205,39 @@ class App extends Component {
     this.setState({ iceCon: "closed", videoStream: null, loading: false });
   }
 
+  showToaster = (message, variant) => {
+    this.setState({ showToaster: true, toasterMessage: message, toasterVariant: variant })
+  }
+
   render() {
     return (
       <Router>
-
+        <Toaster
+          handleClose={() => this.setState({showToaster: false})}
+          show={this.state.showToaster}
+          message={this.state.toasterMessage}
+          variant={this.state.toasterVariant} />
         <div className="wrapper">
           <Sidebar active={this.state.active} />
-
           <div id="content">
-            <Navbar btnClick={() => this.setState({ active: !this.state.active })} />
             <Switch>
               <Route exact path="/">
+                <Navbar btnClick={() => this.setState({ active: !this.state.active })} title={"Live webcam"} />
                 <LiveWebcam {...this.state}
                   startDetect={() => this.startDetect()} stopDetect={() => this.stopDetect()}
                   startWebcam={() => this.startWebcam()} stopWebcam={() => this.stopWebcam()} />
               </Route>
               <Route path="/upload-video">
+                <Navbar btnClick={() => this.setState({ active: !this.state.active })} title={"Video upload"} />
                 {/* <UploadVideo /> */}
                 <div>uvid</div>
               </Route>
-              <Route path="/upload-image">
-                {/* <UploadImage /> */}
-                <div>uimg</div>
+              <Route path="/image-upload">
+                <Navbar
+                  btnClick={() => this.setState({ active: !this.state.active })}
+                  title={"Image upload"} />
+                <ImageUpload
+                  showToaster={(message, variant) => this.showToaster(message, variant)}/>
               </Route>
             </Switch>
           </div>

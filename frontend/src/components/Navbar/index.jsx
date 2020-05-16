@@ -11,7 +11,7 @@ export default class MainNavbar extends Component {
           <Button as="a" type="button" id="sidebarCollapse" variant="primary" onClick={this.props.btnClick}>
             <i className="fas fa-list fa-lg"></i>
           </Button>
-          <Navbar.Brand className="ml-1">Live webcam</Navbar.Brand>
+          <Navbar.Brand className="ml-1">{this.props.title}</Navbar.Brand>
           <Navbar.Collapse />
         </Container>
       </Navbar>

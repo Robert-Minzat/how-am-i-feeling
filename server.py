@@ -9,7 +9,7 @@ import numpy as np
 
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
-from PIL import Image
+from PIL import Image, ExifTags
 
 import cv2
 from aiohttp import web
@@ -37,9 +37,9 @@ def detect_faces(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Cascade MultiScale classifier
-    detected_faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6,
-                                                     minSize=(30, 30),
-                                                     flags=cv2.CASCADE_SCALE_IMAGE)
+    detected_faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5,
+        minSize=(30, 30),
+        flags=cv2.CASCADE_SCALE_IMAGE)
 
     for (i, (x, y, w, h)) in enumerate(detected_faces):
         face = gray[y:y + h, x:x + w]
@@ -53,9 +53,9 @@ def detect_faces(frame):
         label = emotions[predictions.argmax()]
 
         # Add rectangle
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 2)
         # cv2.putText(frame, "Face #{}".format(i + 1), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        cv2.putText(frame, label, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, label, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         # # Add prediction probabilities
         # cv2.putText(frame, "----------------", (40, 100 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
@@ -142,31 +142,6 @@ class VideoTransformTrack(MediaStreamTrack):
         new_frame.time_base = frame.time_base
         return new_frame
 
-
-async def index(request):
-    content = open(os.path.join(ROOT, "index.html"), "r").read()
-    return web.Response(content_type="text/html", text=content)
-
-async def javascript(request):
-    content = open(os.path.join(ROOT, "client.js"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
-async def style(request):
-    content = open(os.path.join(ROOT, "TEMP/lib/css/style.css"), "r").read()
-    return web.Response(content_type="text/css", text=content)
-
-async def bootstrapcss(request):
-    content = open(os.path.join(ROOT, "TEMP/lib/css/bootstrap.min.css"), "r").read()
-    return web.Response(content_type="text/css", text=content)
-
-async def bootstrapjs(request):
-    content = open(os.path.join(ROOT, "lib/js/bootstrap.bundle.min.js"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
-async def jquery(request):
-    content = open(os.path.join(ROOT, "lib/js/jquery-3.5.1.min.js"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
 async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
@@ -229,6 +204,18 @@ async def detect_image(request):
     data_image = data['detect-image'].file
 
     image = Image.open(data_image)
+
+    for orientation in ExifTags.TAGS.keys() :
+        if ExifTags.TAGS[orientation]=='Orientation' : break
+    exif=dict(image._getexif().items())
+
+    if   exif[orientation] == 3 :
+        image=image.rotate(180, expand=True)
+    elif exif[orientation] == 6 :
+        image=image.rotate(270, expand=True)
+    elif exif[orientation] == 8 :
+        image=image.rotate(90, expand=True)
+
     image = np.asarray(image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -274,19 +261,9 @@ if __name__ == "__main__":
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
 
-    # pages
-    # app.router.add_get("/", index)
-
-    # resources
-    app.router.add_get('/style.css', style)
-    app.router.add_get("/bootstrap.css", bootstrapcss)
-    # app.router.add_get("/bootstrap.js", bootstrapjs)
-    # app.router.add_get("/jquery-3.5.1.min.js", jquery)
-    # app.router.add_get("/client.js", javascript)
-
-    # functional routes
     app.router.add_post("/offer", offer)
     app.router.add_post("/detect-image", detect_image)
+
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )
