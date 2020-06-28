@@ -32,13 +32,13 @@ face_detection = cv2.CascadeClassifier(detection_model_path)
 emotion_classifier = load_model(emotion_model_path, compile=False)
 
 
-def detect_faces(frame):
+def detect_faces(frame, minSize = (30, 30), scaleFactor=1.1):
     # BGR -> Gray conversion
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Cascade MultiScale classifier
-    detected_faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5,
-        minSize=(30, 30),
+    detected_faces = face_detection.detectMultiScale(gray, scaleFactor=scaleFactor, minNeighbors=6,
+        minSize=minSize,
         flags=cv2.CASCADE_SCALE_IMAGE)
 
     for (i, (x, y, w, h)) in enumerate(detected_faces):
@@ -53,9 +53,9 @@ def detect_faces(frame):
         label = emotions[predictions.argmax()]
 
         # Add rectangle
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 2)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
         # cv2.putText(frame, "Face #{}".format(i + 1), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        cv2.putText(frame, label, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.putText(frame, label, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         # # Add prediction probabilities
         # cv2.putText(frame, "----------------", (40, 100 + 180 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 155, 0)
@@ -101,7 +101,7 @@ class VideoTransformTrack(MediaStreamTrack):
         frame = await self.track.recv()
 
         img = frame.to_ndarray(format="bgr24")
-        img = detect_faces(img)
+        img = detect_faces(img, scaleFactor=1.15)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # faces = face_detection.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30),
@@ -205,21 +205,22 @@ async def detect_image(request):
 
     image = Image.open(data_image)
 
-    for orientation in ExifTags.TAGS.keys() :
-        if ExifTags.TAGS[orientation]=='Orientation' : break
-    exif=dict(image._getexif().items())
+    if image._getexif() is not None:
+        for orientation in ExifTags.TAGS.keys() :
+            if ExifTags.TAGS[orientation]=='Orientation' : break
+        exif=dict(image._getexif().items())
 
-    if   exif[orientation] == 3 :
-        image=image.rotate(180, expand=True)
-    elif exif[orientation] == 6 :
-        image=image.rotate(270, expand=True)
-    elif exif[orientation] == 8 :
-        image=image.rotate(90, expand=True)
+        if exif[orientation] == 3 :
+            image=image.rotate(180, expand=True)
+        elif exif[orientation] == 6 :
+            image=image.rotate(270, expand=True)
+        elif exif[orientation] == 8 :
+            image=image.rotate(90, expand=True)
 
     image = np.asarray(image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    image = detect_faces(image)
+    image = detect_faces(image, minSize=(50,50))
 
     (flag, encodedImage) = cv2.imencode('.jpg', image)
     return web.Response(body=bytearray(encodedImage), content_type="image/jpg")

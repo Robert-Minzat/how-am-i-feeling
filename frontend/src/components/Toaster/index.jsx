@@ -1,6 +1,4 @@
 import React, { Component } from 'react'
-import Row from 'react-bootstrap/Row'
-import Col from 'react-bootstrap/Col'
 import Toast from 'react-bootstrap/Toast'
 
 export default class Toaster extends Component {
@@ -19,7 +17,7 @@ export default class Toaster extends Component {
           minWidth: 200
         }}>
         <Toast.Header>
-          <strong className="mr-auto pb-auto pt-auto">ED</strong>
+          <i className="fas fa-theater-masks"></i><strong className="mr-auto pb-auto pt-auto"> Emotion Detection</strong>
         </Toast.Header>
         <Toast.Body>{this.props.message}</Toast.Body>
       </Toast>

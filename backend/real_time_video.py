@@ -6,6 +6,7 @@ import numpy as np
 
 # parameters for loading data and images
 detection_model_path = 'haarcascade_files/haarcascade_frontalface_default.xml'
+# emotion_model_path = 'models/_best_tf-bs8.56-0.83.hdf5'
 emotion_model_path = 'models/_best_tf-bs8.56-0.83.hdf5'
 
 # hyper-parameters for bounding boxes shape

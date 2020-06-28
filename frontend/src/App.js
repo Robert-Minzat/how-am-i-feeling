@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component } from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
 import Sidebar from './components/Sidebar'
@@ -6,6 +6,7 @@ import Navbar from './components/Navbar'
 import LiveWebcam from './ui/LiveWebcam'
 import ImageUpload from './ui/ImageUpload'
 import Toaster from './components/Toaster'
+import VideoUpload from './ui/VideoUpload';
 class App extends Component {
   state = {
     constraints: {
@@ -39,27 +40,31 @@ class App extends Component {
     const pc = new RTCPeerConnection(config);
 
     // register some listeners to help debugging
-    pc.addEventListener('icegatheringstatechange', () => {
-      document.getElementById('ice-gathering-state').textContent += ' -> ' + pc.iceGatheringState;
-    }, false);
-    document.getElementById('ice-gathering-state').textContent = pc.iceGatheringState;
+    pc.onicegatheringstatechange = () => {
+      this.setState({ iceGathering: pc.iceGatheringState });
+    };
+    this.setState({ iceGathering: pc.iceGatheringState });
 
     pc.onconnectionstatechange = () => {
       console.log(pc)
-      this.setState({ iceCon: pc.iceConnectionState })
+      this.setState({ iceCon: pc.iceConnectionState });
+      if (pc.iceConnectionState === "connected") {
+        this.showToaster("Connection established successfully!", "bg-success");
+      } else if (pc.iceCon === "disconnected") {
+        this.showToaster("Connection lost!", "bg-danger");
+      }
     };
-    this.setState({ iceCon: pc.iceConnectionState })
+    this.setState({ iceCon: pc.iceConnectionState });
 
-    pc.addEventListener('signalingstatechange', () => {
-      document.getElementById('signaling-state').textContent += ' -> ' + pc.signalingState;
-    }, false);
-    document.getElementById('signaling-state').textContent = pc.signalingState;
+    pc.onsignalingstatechange = () => {
+      this.setState({ signaling: pc.signalingState });
+    };
+    this.setState({ signaling: pc.signalingState });
 
     // connect video
     pc.ontrack = (event) => {
       console.log(event);
       if (event.track.kind === 'video')
-        // document.getElementById('video').srcObject = event.streams[0];
         this.setState({ videoStream: event.streams[0] });
     }
 
@@ -90,7 +95,7 @@ class App extends Component {
       // codec = 'VP8/90000';
       offer = pc.localDescription
 
-      document.getElementById('offer-sdp').textContent = offer.sdp;
+      // document.getElementById('offer-sdp').textContent = offer.sdp;
 
       const response = await fetch('/offer', {
         body: JSON.stringify({
@@ -104,7 +109,7 @@ class App extends Component {
       });
 
       const answer = await response.json();
-      document.getElementById('answer-sdp').textContent = answer.sdp;
+      // document.getElementById('answer-sdp').textContent = answer.sdp;
       pc.setRemoteDescription(answer);
       this.setState({ loading: false });
     }
@@ -130,28 +135,17 @@ class App extends Component {
     this.setState({ videoStream: null, loading: false });
   }
 
-  startDetect = async () => {
+  startDetect = async (stream, streamTracks) => {
     this.setState({ loading: true });
 
     await this.createPeerConnection();
     console.log(this.state.pc)
-    let time_start = null
 
     // create datachannel
     let parameters = {
       "ordered": "true",
     }
     this.setState({ dc: this.state.pc.createDataChannel('chat', parameters) })
-
-    // // just for debugging
-    // this.state.dc.onopen = function () {
-    //   document.getElementById('data-channel').textContent += '- open\n';
-    //   this.setState({dcInterval: setInterval(function () {
-    //     var message = 'ping ' + current_stamp();
-    //     document.getElementById('data-channel').textContent += '> ' + message + '\n';
-    //     this.state.dc.send(message);
-    //   }, 1000)})
-    // };
 
     this.state.dc.onmessage = function (event) {
       console.log(event)
@@ -164,11 +158,9 @@ class App extends Component {
     };
 
     try {
-      const userMediaStream = await navigator.mediaDevices.getUserMedia(this.state.constraints);
-      console.log("aici")
-      console.log(userMediaStream.getTracks())
-      userMediaStream.getTracks().forEach(track => {
-        this.state.pc.addTrack(track, userMediaStream);
+      // const userMediaStream = await navigator.mediaDevices.getUserMedia(this.state.constraints);
+      streamTracks.forEach(track => {
+        this.state.pc.addTrack(track, stream);
       });
       await this.negotiate();
     }
@@ -213,7 +205,7 @@ class App extends Component {
     return (
       <Router>
         <Toaster
-          handleClose={() => this.setState({showToaster: false})}
+          handleClose={() => this.setState({ showToaster: false })}
           show={this.state.showToaster}
           message={this.state.toasterMessage}
           variant={this.state.toasterVariant} />
@@ -224,20 +216,18 @@ class App extends Component {
               <Route exact path="/">
                 <Navbar btnClick={() => this.setState({ active: !this.state.active })} title={"Live webcam"} />
                 <LiveWebcam {...this.state}
-                  startDetect={() => this.startDetect()} stopDetect={() => this.stopDetect()}
+                  startDetect={(stream, streamTracks) => this.startDetect(stream, streamTracks)} stopDetect={() => this.stopDetect()}
                   startWebcam={() => this.startWebcam()} stopWebcam={() => this.stopWebcam()} />
               </Route>
               <Route path="/upload-video">
                 <Navbar btnClick={() => this.setState({ active: !this.state.active })} title={"Video upload"} />
-                {/* <UploadVideo /> */}
-                <div>uvid</div>
+                <VideoUpload {...this.state}
+                  startDetect={(stream, streamTracks) => this.startDetect(stream, streamTracks)} stopDetect={() => this.stopDetect()}/>
               </Route>
               <Route path="/image-upload">
-                <Navbar
-                  btnClick={() => this.setState({ active: !this.state.active })}
-                  title={"Image upload"} />
+                <Navbar btnClick={() => this.setState({ active: !this.state.active })} title={"Image upload"} />
                 <ImageUpload
-                  showToaster={(message, variant) => this.showToaster(message, variant)}/>
+                  showToaster={(message, variant) => this.showToaster(message, variant)} />
               </Route>
             </Switch>
           </div>

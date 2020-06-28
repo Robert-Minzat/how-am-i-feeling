@@ -51,7 +51,7 @@ def gen_model():
     model.add(Conv2D(
         filters=7, kernel_size=(3, 3), padding='same'))
     model.add(GlobalAveragePooling2D())
-    model.add(Activation('softmax', name='predictions'))
+    model.add(Activation('softmax', name='softmax'))
     return model
 
 
@@ -100,3 +100,5 @@ def gen_model2():
     model.summary()
 
     return model
+
+gen_model().summary()
